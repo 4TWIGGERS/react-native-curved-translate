@@ -8,27 +8,25 @@ import {
    Image,
    StyleSheet,
 } from "react-native";
-import { Feather } from "@expo/vector-icons";
+import { FontAwesome5 } from "@expo/vector-icons";
 import Animated, {
    useAnimatedStyle,
    useSharedValue,
-   withSpring,
    interpolate,
    withTiming,
-   useAnimatedRef,
    Easing,
-   measure,
-   useDerivedValue,
 } from "react-native-reanimated";
-import txt from "./text";
-import { getBottomSpace } from "react-native-iphone-x-helper";
+import {
+   getBottomSpace,
+   getStatusBarHeight,
+} from "react-native-iphone-x-helper";
+
+const colorPrimary = "rgb(11,70,245)";
 
 const { width } = Dimensions.get("window");
 
-const BUTTON_TOP_MARGIN = 20;
-
 const ORIGINAL_BUTTON_WIDTH = width - 100;
-const BUTTON_SIZE = 36;
+const BUTTON_SIZE = 50;
 
 const COORDS = { x: 0, y: 0 };
 
@@ -66,8 +64,8 @@ export default function App() {
       const translateY = calcBezier(
          ballAnimation.value,
          ball.y,
-         cart.y,
-         cart.y
+         cart.y - 10,
+         cart.y - 10
       );
 
       return {
@@ -75,7 +73,7 @@ export default function App() {
          transform: [
             { translateX },
             { translateY },
-            { scale: interpolate(ballAnimation.value, [0, 1], [1, 0.5]) },
+            { scale: interpolate(ballAnimation.value, [0, 1], [1, 0.2]) },
          ],
       };
    });
@@ -103,12 +101,93 @@ export default function App() {
 
    return (
       <View style={styles.flex}>
-         <View style={styles.header}>
-            <View
-               ref={cartRef}
-               onLayout={({ nativeEvent }) => {
-                  console.log(nativeEvent);
+         <ScrollView
+            contentContainerStyle={styles.scrollContent}
+            style={styles.flex}
+         >
+            <View>
+               <View style={styles.imageContainer}>
+                  <Image
+                     resizeMode="contain"
+                     style={styles.image}
+                     source={require("./assets/headphones.png")}
+                  />
+               </View>
+               <View style={styles.content}>
+                  <Text style={styles.title}>
+                     4TWIGGERS NEO - (2021 Edition)
+                  </Text>
+                  <Text style={styles.description}>- Unparalleled sound</Text>
+                  <Text style={styles.description}>- Ear comfort</Text>
+                  <Text style={styles.description}>- Bluetooth 5.0</Text>
+                  <Text style={styles.description}>- 15 Hour battery life</Text>
+                  <Text style={styles.description}>- Quick charge</Text>
+               </View>
+            </View>
 
+            <View>
+               <View>
+                  <View style={styles.divider} />
+                  <View style={styles.priceRow}>
+                     <Text style={styles.priceKey}>Was: </Text>
+                     <Text style={styles.priceOld}>$ 350</Text>
+                  </View>
+                  <View style={styles.priceRow}>
+                     <Text style={styles.priceKey}>Price: </Text>
+                     <Text style={styles.price}>$ 199</Text>
+                  </View>
+               </View>
+
+               {/** Wrapped into View since TouchableOpacity can't animate opacity */}
+               <Animated.View style={[styles.buttonContainer, buttonStyle]}>
+                  <TouchableOpacity
+                     ref={buttonRef}
+                     activeOpacity={1}
+                     style={styles.button}
+                     onPress={() => {
+                        buttonRef.current.measure(
+                           (_x, _y, _width, _height, _px, py) => {
+                              setBallPosition(py);
+
+                              buttonWidth.value = withTiming(
+                                 0,
+                                 {
+                                    duration: 300,
+                                    easing: Easing.bezier(0.11, 0, 0.5, 0),
+                                 },
+                                 () => {
+                                    ballOpacity.value = 1;
+                                    buttonOpacity.value = 0;
+                                    ballAnimation.value = withTiming(1, {
+                                       duration: 900,
+                                       easing: Easing.bezier(0.12, 0, 0.39, 0),
+                                    });
+                                 }
+                              );
+                           }
+                        );
+                     }}
+                  >
+                     <Animated.Text style={[styles.buttonLabel, labelStyle]}>
+                        Add to Cart
+                     </Animated.Text>
+                  </TouchableOpacity>
+               </Animated.View>
+            </View>
+         </ScrollView>
+
+         <View style={styles.navContainer}>
+            <View style={styles.navButton}>
+               <FontAwesome5
+                  size={15}
+                  color="rgb(115,114,131)"
+                  name="chevron-left"
+               />
+            </View>
+            <View
+               style={styles.navButton}
+               ref={cartRef}
+               onLayout={() => {
                   //Precalculate cart button position
                   if (
                      cartRef.current &&
@@ -122,54 +201,13 @@ export default function App() {
                      );
                }}
             >
-               <Feather name="shopping-cart" size={20} />
+               <FontAwesome5
+                  color="rgb(115,114,131)"
+                  name="shopping-cart"
+                  size={15}
+               />
             </View>
          </View>
-
-         <ScrollView style={styles.flex} contentContainerStyle={styles.content}>
-            <Image
-               resizeMode="contain"
-               style={styles.image}
-               source={require("./assets/chair.png")}
-            />
-            <Text>{txt}</Text>
-
-            {/** Wrapped into View since TouchableOpacity can't animate opacity */}
-            <Animated.View style={[styles.buttonContainer, buttonStyle]}>
-               <TouchableOpacity
-                  ref={buttonRef}
-                  activeOpacity={1}
-                  style={styles.button}
-                  onPress={() => {
-                     buttonRef.current.measure(
-                        (_x, _y, _width, _height, _px, py) => {
-                           setBallPosition(py);
-
-                           buttonWidth.value = withTiming(
-                              0,
-                              {
-                                 duration: 300,
-                                 easing: Easing.bezier(0.11, 0, 0.5, 0),
-                              },
-                              () => {
-                                 ballOpacity.value = 1;
-                                 buttonOpacity.value = 0;
-                                 ballAnimation.value = withTiming(1, {
-                                    duration: 900,
-                                    easing: Easing.bezier(0.12, 0, 0.39, 0),
-                                 });
-                              }
-                           );
-                        }
-                     );
-                  }}
-               >
-                  <Animated.Text style={[styles.buttonLabel, labelStyle]}>
-                     Add to Cart
-                  </Animated.Text>
-               </TouchableOpacity>
-            </Animated.View>
-         </ScrollView>
 
          <Animated.View style={[styles.cartItemBall, ballStyle]} />
       </View>
@@ -180,24 +218,91 @@ const styles = StyleSheet.create({
    flex: {
       flex: 1,
    },
-   header: {
-      alignItems: "flex-end",
-      marginTop: 30,
-      paddingHorizontal: 20,
-      backgroundColor: "rgba(0,0,0,0.2)",
-      paddingVertical: 10,
+   navContainer: {
+      top: getStatusBarHeight() + 40,
+      position: "absolute",
+      width: "100%",
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      paddingHorizontal: 24,
+   },
+   navButton: {
+      height: 44,
+      width: 44,
+      backgroundColor: "white",
+      borderRadius: 12,
+      alignItems: "center",
+      justifyContent: "center",
+   },
+   scrollContent: {
+      flexGrow: 1,
+      justifyContent: "space-between",
+      paddingBottom: getBottomSpace() || 20,
    },
    content: {
-      paddingVertical: 30,
       paddingHorizontal: 20,
-      paddingBottom: getBottomSpace(),
+   },
+   imageContainer: {
+      backgroundColor: "rgb(242,242,242)",
+      borderBottomLeftRadius: 20,
+      borderBottomRightRadius: 20,
+      paddingHorizontal: 20,
+      paddingTop: 60,
+      paddingBottom: 20,
+      marginBottom: 40,
+      alignItems: "center",
+      justifyContent: "center",
    },
    image: {
       height: 300,
       width: "100%",
    },
+   divider: {
+      width: "100%",
+      height: 1,
+      backgroundColor: "#8a8a8a",
+      marginBottom: 10,
+      opacity: 0.2,
+   },
+   title: {
+      fontSize: 30,
+      fontWeight: "bold",
+      color: "#2b2b2b",
+      marginBottom: 10,
+   },
+   description: {
+      color: "#454545",
+      fontSize: 14,
+      marginVertical: 5,
+   },
+   priceKey: {
+      color: "#454545",
+      width: 40,
+   },
+   priceContainer: {
+      marginLeft: 20,
+      marginTop: 30,
+   },
+   priceRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      marginLeft: 20,
+   },
+   priceOld: {
+      color: "#595959",
+      fontWeight: "bold",
+      fontSize: 18,
+      textDecorationLine: "line-through",
+      opacity: 0.7,
+   },
+   price: {
+      color: "#454545",
+      fontSize: 20,
+      fontWeight: "bold",
+   },
    buttonContainer: {
-      marginTop: BUTTON_TOP_MARGIN,
+      marginTop: 10,
       borderRadius: BUTTON_SIZE / 2,
       width: ORIGINAL_BUTTON_WIDTH,
       height: BUTTON_SIZE,
@@ -205,7 +310,7 @@ const styles = StyleSheet.create({
       overflow: "hidden",
    },
    button: {
-      backgroundColor: "blue",
+      backgroundColor: colorPrimary,
       alignItems: "center",
       justifyContent: "center",
       flex: 1,
@@ -220,6 +325,6 @@ const styles = StyleSheet.create({
       height: BUTTON_SIZE,
       width: BUTTON_SIZE,
       borderRadius: BUTTON_SIZE / 2,
-      backgroundColor: "blue",
+      backgroundColor: colorPrimary,
    },
 });
